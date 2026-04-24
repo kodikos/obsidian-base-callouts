@@ -1,4 +1,4 @@
-import { ItemView, MarkdownRenderer, WorkspaceLeaf, TFile } from 'obsidian';
+import { ItemView, MarkdownRenderer, WorkspaceLeaf, TFile, Component } from 'obsidian';
 import CalloutList from './main';
 
 export const VIEW_TYPE_CALLOUT = 'callout-view';
@@ -67,7 +67,7 @@ export class CalloutView extends ItemView {
 			filteredFiles.map(async (filename) =>{
 				return {
 					filename: filename.path,
-					contents: this.parseForCalloutBlocks(
+					contents: parseForCalloutBlocks(
 						await this.app.vault.cachedRead(filename),
 						allowedTypes
 					)
@@ -119,38 +119,56 @@ export class CalloutView extends ItemView {
 		if (pathFilter.trim().length === 0) return [];
 		return pathFilter.split(';').map((p) => p.trim());
 	}
+}
 
-	//	Extract specific type of callout blocks from a markdown file
-	parseForCalloutBlocks(contents: string, allowedCalloutTypes: string[]) {
-		const lines = contents.split('\n');
-		const calloutBlocks = [];
-		const doTypeFilter = allowedCalloutTypes.length > 0;
-		let currentCalloutBlock : string[] = [];
-		let inCalloutBlock = false;
+export function renderCalloutBlocks(
+	callouts: string[][],
+	filename : string,
+	container: HTMLElement,
+	component: Component
+) {
+	if (callouts.length == 0) return '';
+	const calloutMarkdown = callouts
+		//.filter((block) => block.length > 0)
+		.map((block) => block.join('\n');	// Join up all the lines
 
-		for (const line of lines) {
-			if (line.startsWith('>[!')) {
-				inCalloutBlock = true;
-			}
-			if (inCalloutBlock) {
-				if (line.startsWith('>')) {
-					currentCalloutBlock.push(line);
-				} else {
-					inCalloutBlock = false;
+	const output = `### ${filename}\n${calloutMarkdown.join('\n\n')}`;
 
-					// Get the callout type and title from the first line
-					const calloutInfo = currentCalloutBlock[0].match(/\>\[!([^\]]+)\](.*)?$/);
-					const calloutType = calloutInfo ? calloutInfo[1] : null;
-					if (!doTypeFilter
-						|| (doTypeFilter && calloutType && allowedCalloutTypes.includes(calloutType))
-					) {
-						calloutBlocks.push(currentCalloutBlock);
-					}
+	//	Render the markdown
+	const markdownWrapper = container.createDiv();
+	MarkdownRenderer.render(this.app, output, markdownWrapper, '', component);
+}
 
-					currentCalloutBlock = [];
+//	Extract specific type of callout blocks from a markdown file
+export function parseForCalloutBlocks(contents: string, allowedCalloutTypes: string[]) : string[][] {
+	const lines = contents.split('\n');
+	const calloutBlocks = [];
+	const doTypeFilter = allowedCalloutTypes.length > 0;
+	let currentCalloutBlock : string[] = [];
+	let inCalloutBlock = false;
+
+	for (const line of lines) {
+		if (line.startsWith('>[!')) {
+			inCalloutBlock = true;
+		}
+		if (inCalloutBlock) {
+			if (line.startsWith('>')) {
+				currentCalloutBlock.push(line);
+			} else {
+				inCalloutBlock = false;
+
+				// Get the callout type and title from the first line
+				const calloutInfo = currentCalloutBlock[0].match(/\>\[!([^\]]+)\](.*)?$/);
+				const calloutType = calloutInfo ? calloutInfo[1] : null;
+				if (!doTypeFilter
+					|| (doTypeFilter && calloutType && allowedCalloutTypes.includes(calloutType))
+				) {
+					calloutBlocks.push(currentCalloutBlock);
 				}
+
+				currentCalloutBlock = [];
 			}
 		}
-		return calloutBlocks;
 	}
+	return calloutBlocks;
 }
