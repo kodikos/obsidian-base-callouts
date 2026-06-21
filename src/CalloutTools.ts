@@ -46,6 +46,7 @@ export function parseForCalloutBlocks(contents: string, options : CalloutParserO
 				// Get the callout type and title from the first line
 				const calloutInfo = currentCalloutBlock[0].match(/\>\[!([^\]]+)\](.*)?$/);
 				const calloutType = calloutInfo ? calloutInfo[1] : null;
+
 				if (calloutType && isEligibleCalloutType(calloutType)) {
 					calloutBlocks.push(currentCalloutBlock);
 				}

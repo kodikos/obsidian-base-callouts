@@ -1,35 +1,8 @@
-import { BasesView, QueryController } from 'obsidian';
-import { parseForCalloutBlocks, renderCalloutBlocks, type CalloutParserOptions } from './CalloutView';
-import { TFile } from 'obsidian';
-
-export type FilterOptions = {
-	customCalloutTypes: string;
-	showAllCustomCallouts: boolean;
-	showAllStandardCallouts: boolean;
-}
+import { BasesView, QueryController, TFile } from 'obsidian';
+import { parseForCalloutBlocks, renderCalloutBlocks, type CalloutParserOptions } from './CalloutTools';
+import { getFilterOptions, getCalloutFilteredTypes } from './FilterTools';
 
 export const CalloutViewType = 'Callouts';
-
-export const standardCallouts: string[] = [
-	'note',
-	'abstract', 'summary', 'tldr',
-	'info',
-	'todo',
-	'tip', 'hint',
-	'success', 'check', 'done',
-	'question', 'help', 'faq',
-	'warning', 'attention', 'caution',
-	'failure', 'fail', 'missing',
-	'danger', 'error',
-	'bug',
-	'example',
-	'quote', 'cite'
-];
-
-export const defaultCustomCalloutTypes = '';
-export const defaultShowAllCustomCallouts = true;
-export const defaultShowAllStandardCallouts = true;
-
 
 export class CalloutsBasesView extends BasesView {
 	readonly type = CalloutViewType;
@@ -42,7 +15,7 @@ export class CalloutsBasesView extends BasesView {
 
 	public async onDataUpdated(): Promise<void> {
 		const order = this.config.getOrder();
-		const filteredCalloutTypes = this.getCalloutFilteredTypes(this.getFilterOptions());
+		const filteredCalloutTypes = getCalloutFilteredTypes(getFilterOptions(this));
 
 		this.containerEl.empty();
 		const tableRoot = this.containerEl.createDiv('bases-callout-table-container');
@@ -81,36 +54,5 @@ export class CalloutsBasesView extends BasesView {
 				});
 			}
 		}
-	}
-
-	getFilterOptions() : FilterOptions{
-		const defaultOnUndefined =
-			(value : any, defaultValue : any) =>
-				value === undefined ? defaultValue : value;
-		return {
-			customCalloutTypes: defaultOnUndefined(this.config.get('customCalloutTypeFilter'), defaultCustomCalloutTypes),
-			showAllCustomCallouts: defaultOnUndefined(this.config.get('showAllCustomCallouts'), defaultShowAllCustomCallouts),
-			showAllStandardCallouts: defaultOnUndefined(this.config.get('showAllStandardCallouts'), defaultShowAllStandardCallouts)
-		};
-	}
-
-	getCalloutFilteredTypes(filterOptions : FilterOptions) : CalloutParserOptions {
-		const parseCalloutField =
-			(field: string) => field.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
-
-		const customCalloutTypes = parseCalloutField(filterOptions.customCalloutTypes);
-		const showAllCustomCallouts = filterOptions.showAllCustomCallouts;
-		const showAllStandardCallouts = filterOptions.showAllStandardCallouts;
-		const standardCalloutTypes = showAllStandardCallouts ? standardCallouts : [];
-
-		// show all custom: since I don't have a list of all custom properties, I'm
-		// switching it to use an exclusion filter when parsing. So this inverts the
-		// standard callouts list
-
-		//console.log("FILTER INPUTS", standardCalloutTypes, customCalloutTypes, showAllCustomCallouts);
-
-		return showAllCustomCallouts
-			? { excludeTypes: standardCallouts.filter((type) => !customCalloutTypes.includes(type)) }
-			: { includeTypes: [...standardCalloutTypes, ...customCalloutTypes] };
 	}
 }

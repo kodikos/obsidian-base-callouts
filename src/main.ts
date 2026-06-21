@@ -1,11 +1,15 @@
 import { Plugin } from 'obsidian';
 import {
 	CalloutsBasesView,
-	CalloutViewType,
+	CalloutViewType
+} from './CalloutsBasesView';
+
+import {
 	defaultShowAllCustomCallouts,
 	defaultShowAllStandardCallouts,
 	defaultCustomCalloutTypes
-} from './CalloutsBasesView';
+} from './FilterTools';
+
 
 export default class CalloutList extends Plugin {
 	async onload() {
@@ -31,7 +35,7 @@ export default class CalloutList extends Plugin {
 				},
 				{
 					type: 'text',
-					displayName: 'Only show these custom types (comma separated)',
+					displayName: 'Always show (comma separated)',
 					key: 'customCalloutTypeFilter',
 					default: defaultCustomCalloutTypes
 				}
