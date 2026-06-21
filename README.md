@@ -12,7 +12,7 @@ For more information about callouts, refer to the [Obsidian documentation](https
 
 ## Installation
 
-Download the files from the latest release and extract into the `.obsidian/plugins/callout_list/` folder. Then it should appear under the community plugins area in the settings, where you can then enable it and change the settings.
+Download the files from the latest release and extract into the `.obsidian/plugins/obsidian-base-callouts/` folder. Then it should appear under the community plugins area in the settings, where you can then enable it and change the settings.
 
 ## Known issues/limitations
 

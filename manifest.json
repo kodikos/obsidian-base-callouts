@@ -1,9 +1,9 @@
 {
-	"id": "callout-list",
-	"name": "Callout List",
-	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
-	"description": "Provides ways to list and filter callouts in the vault",
+	"id": "obsidian-base-callouts",
+	"name": "Base Callouts",
+	"version": "1.1.0",
+	"minAppVersion": "1.10.0",
+	"description": "Adds callouts to Obsidian Base views",
 	"author": "Kodikos",
 	"authorUrl": "https://github.com/kodikos/",
 	"isDesktopOnly": false
