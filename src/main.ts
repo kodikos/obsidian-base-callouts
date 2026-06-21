@@ -3,6 +3,28 @@ import { parseForCalloutBlocks, renderCalloutBlocks } from './CalloutView';
 
 export const CalloutViewType = 'Callouts';
 
+function standardCallouts() : string[] {
+	return [
+		'note',
+		'abstract', 'summary', 'tldr',
+		'info',
+		'todo',
+		'tip', 'hint',
+		'success', 'check', 'done',
+		'question', 'help', 'faq',
+		'warning', 'attention', 'caution',
+		'failure', 'fail', 'missing',
+		'danger', 'error',
+		'bug',
+		'example',
+		'quote', 'cite'
+	];
+}
+
+const defaultStdCalloutTypes = standardCallouts().join(', ');
+const defaultCustomCalloutTypes = '';
+const defaultShowAllCustomCallouts = true;
+
 export default class CalloutList extends Plugin {
   async onload() {
     // Tell Obsidian about the new view type that this plugin provides.
@@ -11,7 +33,27 @@ export default class CalloutList extends Plugin {
       icon: 'lucide-rectangle-ellipsis',
       factory: (controller, containerEl) => {
         return new CalloutsBasesView(controller, containerEl)
-      }
+      },
+      options: () => ([
+        {
+          type: 'text',
+          displayName: 'Show Standard Types',
+          key: 'stdCalloutTypeFilter',
+          default: defaultStdCalloutTypes
+        },
+        {
+          type: 'toggle',
+          key: 'showAllCustomCallouts',
+          displayName: 'Show All Custom Callouts',
+          default: defaultShowAllCustomCallouts
+        },
+        {
+          type: 'text',
+          displayName: 'Only show these custom types (comma separated)',
+          key: 'customCalloutTypeFilter',
+          default: defaultCustomCalloutTypes
+        }
+      ])
     });
   }
 }
@@ -30,6 +72,8 @@ export class CalloutsBasesView extends BasesView {
   // simply draw "Hello World" to screen.
   public onDataUpdated(): Promise<void> {
   	const order = this.config.getOrder();
+	const filteredCalloutTypes = this.getCalloutFilteredTypes(this.getFilterOptions());
+	console.log('filtered callout types', filteredCalloutTypes);
     this.containerEl.empty();
     const tableRoot = this.containerEl.createDiv('bases-callout-table-container');
 
@@ -68,7 +112,7 @@ export class CalloutsBasesView extends BasesView {
           if (rowFile != null) {
             const calloutMarkup = parseForCalloutBlocks(
               await this.app.vault.cachedRead(rowFile as TFile),
-                ['todo', 'list', 'error']
+                filteredCalloutTypes
               );
             console.log('callout markup', calloutMarkup);
             //const nameEl = el.createDiv({ text: calloutMarkup.join("<br>") });
@@ -78,6 +122,32 @@ export class CalloutsBasesView extends BasesView {
       }
       //this.containerEl.createDiv({ text: 'Hello World' });
     }
+  }
+
+  getFilterOptions() {
+	const defaultOnUndefined = (value, defaultValue) => value === undefined ? defaultValue : value;
+	return {
+		standardCalloutTypes: defaultOnUndefined(this.config.get('stdCalloutTypeFilter'), defaultStdCalloutTypes),
+		customCalloutTypes: defaultOnUndefined(this.config.get('customCalloutTypeFilter'), defaultCustomCalloutTypes),
+		showAllCustomCallouts: defaultOnUndefined(this.config.get('showAllCustomCallouts'), defaultShowAllCustomCallouts)
+	};
+  }
+
+  getCalloutFilteredTypes(filterOptions) {
+	const parseCalloutField = (field: string) => field.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
+    const standardCalloutTypes = parseCalloutField(filterOptions.standardCalloutTypes);
+    const customCalloutTypes = parseCalloutField(filterOptions.customCalloutTypes);
+    const showAllCustomCallouts = filterOptions.showAllCustomCallouts;
+
+    // show all: use an exclusion filter, invert the standard callouts
+    // not show all: use an inclusion filter
+console.log(`RAW FILTER INPUTS: [${this.config.get('stdCalloutTypeFilter')}] [${this.config.get('customCalloutTypeFilter')}] ${showAllCustomCallouts}`);
+console.log("FILTER INPUTS", standardCalloutTypes, customCalloutTypes, showAllCustomCallouts);
+	if (showAllCustomCallouts) {
+		return { excludeTypes: standardCalloutTypes.filter((type) => !standardCallouts().includes(type)) };
+	} else {
+		return { includeTypes: [...standardCalloutTypes, ...customCalloutTypes] };
+	}
   }
 }
 

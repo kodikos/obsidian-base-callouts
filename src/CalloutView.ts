@@ -140,12 +140,16 @@ export function renderCalloutBlocks(
 }
 
 //	Extract specific type of callout blocks from a markdown file
-export function parseForCalloutBlocks(contents: string, allowedCalloutTypes: string[]) : string[][] {
+export function parseForCalloutBlocks(contents: string, options) : string[][] {
 	const lines = contents.split('\n');
 	const calloutBlocks = [];
-	const doTypeFilter = allowedCalloutTypes.length > 0;
 	let currentCalloutBlock : string[] = [];
 	let inCalloutBlock = false;
+
+	const isEligibleCalloutType = (calloutType: string) => {
+		return (options.includeTypes && options.includeTypes.includes(calloutType))
+			|| (options.excludeTypes && !options.excludeTypes.includes(calloutType));
+	}
 
 	for (const line of lines) {
 		if (line.startsWith('>[!')) {
@@ -160,9 +164,7 @@ export function parseForCalloutBlocks(contents: string, allowedCalloutTypes: str
 				// Get the callout type and title from the first line
 				const calloutInfo = currentCalloutBlock[0].match(/\>\[!([^\]]+)\](.*)?$/);
 				const calloutType = calloutInfo ? calloutInfo[1] : null;
-				if (!doTypeFilter
-					|| (doTypeFilter && calloutType && allowedCalloutTypes.includes(calloutType))
-				) {
+				if (calloutType && isEligibleCalloutType(calloutType)) {
 					calloutBlocks.push(currentCalloutBlock);
 				}
 
