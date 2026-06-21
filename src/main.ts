@@ -22,48 +22,58 @@ export class CalloutsBasesView extends BasesView {
 
   constructor(controller: QueryController, parentEl: HTMLElement) {
     super(controller);
-    this.containerEl = parentEl.createDiv('bases-callouts-view-container');
+    this.containerEl = parentEl.createDiv('bases-callout-view-container');
   }
 
   // onDataUpdated is called by Obsidian whenever there is a configuration
   // or data change in the vault which may affect your view. For now,
   // simply draw "Hello World" to screen.
   public onDataUpdated(): Promise<void> {
-  const order = this.config.getOrder()
+  	const order = this.config.getOrder();
     this.containerEl.empty();
+    const tableRoot = this.containerEl.createDiv('bases-callout-table-container');
 
     // Handles groups, one of the sort options
     for (const group of this.data.groupedData) {
-      const groupEl = this.containerEl.createDiv('bases-callout-group');
+      console.log("group", group);
+	  //const columnClass = group.entries.length > 0 ? 'double-column' : 'single-column';
+    //   const groupEl = tableRoot.createDiv(`bases-callout-table ${columnClass}`);
+      //groupEl.createDiv('bases-callout-group-heading', { text: group.name });
+    //   const bodyEl = groupEl.createDiv('bases-callout-tbody');
       //const groupHeadingEl = groupEl.createDiv('bases-callout-group-heading', { text: group.name });
       // el.createSpan('bases-callout-group-heading-count', { text: `(${group.entries.length})` });
 
       // I think this is more likely traversing an index of group entries
       for (const entry of group.entries) {
-        groupEl.createDiv('bases-callout-item', async (el) => {
-          //	This is for traversing the properties of a file, more for the table view?
+        tableRoot.createDiv('bases-callout-tr', async (el) => {
+          console.log("element in group", el);
+          //  The properties are each column of data
+          const columnRenders : string[] = [];
+          let rowFile : TFile|null = null;
+
           for (const propertyName of order) {
             const { type, name } = parsePropertyId(propertyName);
             const value = entry.getValue(propertyName);
 
             if (name === 'name' && type === 'file') {
-              const fileName = String(entry.file.name);
-			  console.log('file info', entry.file.path);
-              const calloutMarkup = parseForCalloutBlocks(
-				 await this.app.vault.cachedRead(entry.file as TFile),
-                ['todo', 'list', 'error']
-              );
-			  console.log('callout markup', calloutMarkup);
-        	    //const nameEl = el.createDiv({ text: calloutMarkup.join("<br>") });
-				renderCalloutBlocks(calloutMarkup, entry.file.name, el, this);
+              rowFile = entry.file;
             } else {
               el.createEl('div', {
-              	cls: 'bases-list-entry-property',
+              	cls: 'bases-callout-td',
               	text: value.toString()
               });
             }
           }
           // rendering should probably happen here once all the values have been collected
+          if (rowFile != null) {
+            const calloutMarkup = parseForCalloutBlocks(
+              await this.app.vault.cachedRead(rowFile as TFile),
+                ['todo', 'list', 'error']
+              );
+            console.log('callout markup', calloutMarkup);
+            //const nameEl = el.createDiv({ text: calloutMarkup.join("<br>") });
+            renderCalloutBlocks(calloutMarkup, rowFile.name, el.createDiv('bases-callout-td callout-cell'), this);
+          }
         });
       }
       //this.containerEl.createDiv({ text: 'Hello World' });
@@ -71,7 +81,8 @@ export class CalloutsBasesView extends BasesView {
   }
 }
 
-
+// this has the details for it being its own view. But I probably only want
+// the ribbon hooks or commands
 /*
 import { Plugin, WorkspaceLeaf } from 'obsidian';
 //import { CalloutView, VIEW_TYPE_CALLOUT } from './CalloutView';

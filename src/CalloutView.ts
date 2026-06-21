@@ -130,10 +130,10 @@ export function renderCalloutBlocks(
 	if (callouts.length == 0) return '';
 	const calloutMarkdown = callouts
 		//.filter((block) => block.length > 0)
-		.map((block) => block.join('\n');	// Join up all the lines
+		.map((block) => block.join('\n'));	// Join up all the lines
 
-	const output = `### ${filename}\n${calloutMarkdown.join('\n\n')}`;
-
+	//const output = `### ${filename}\n${calloutMarkdown.join('\n\n')}`;
+	const output = calloutMarkdown.join('\n\n');
 	//	Render the markdown
 	const markdownWrapper = container.createDiv();
 	MarkdownRenderer.render(this.app, output, markdownWrapper, '', component);
